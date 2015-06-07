@@ -18,14 +18,15 @@ public class Conversation extends CanvasModel<Conversation> {
 
     public enum WorkflowState {READ, UNREAD, ARCHIVED, UNKNOWN}
 
-    private long id;                    // The unique id for the conversation.
-    private String workflow_state;      // The workflowState of the conversation (unread, read, archived)
-    private String last_message;        // <100 character preview of the last message.
-    private String last_message_at;   // Date of the last message sent.
+    private long id;                        // The unique id for the conversation.
+    private String subject;                 // Message Subject
+    private String workflow_state;          // The workflowState of the conversation (unread, read, archived)
+    private String last_message;            // 100 character preview of the last message.
+    private String last_message_at;         // Date of the last message sent.
     private String last_authored_message_at;
-    private int message_count;          // Number of messages in the conversation.
-    private boolean subscribed;         // Whether or not the user is subscribed to the current message.
-    private boolean starred;            // Whether or not the message is starred.
+    private int message_count;              // Number of messages in the conversation.
+    private boolean subscribed;             // Whether or not the user is subscribed to the current message.
+    private boolean starred;                // Whether or not the message is starred.
 
     private List<String> properties = new ArrayList<String>();
 
@@ -56,7 +57,7 @@ public class Conversation extends CanvasModel<Conversation> {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // Getters and Setters
+    //region Getters and Setters
     ///////////////////////////////////////////////////////////////////////////
 
     @Override
@@ -77,6 +78,15 @@ public class Conversation extends CanvasModel<Conversation> {
     public void setId(long id){
         this.id = id;
     }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
     public void setWorkflowState(WorkflowState state) {
         if(state == WorkflowState.UNREAD){
             workflow_state = "unread";
@@ -122,8 +132,14 @@ public class Conversation extends CanvasModel<Conversation> {
     public boolean isSubscribed() {
         return subscribed;
     }
+    public void setSubscribed(boolean subscribed){
+        this.subscribed = subscribed;
+    }
     public boolean isStarred() {
         return starred;
+    }
+    public void setStarred(boolean starred) {
+        this.starred = starred;
     }
     public boolean isLastAuthor() {
         for(int i = 0; i < properties.size(); i++)
@@ -174,6 +190,10 @@ public class Conversation extends CanvasModel<Conversation> {
         return determineMessageTitle(myUserID,monologue);
     }
     public boolean isDeleted(){return deleted;}
+
+    ///////////////////////////////////////////////////////////////////////////
+    //endregion Getters and Setters
+    ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
     // Required Overrides
@@ -270,27 +290,29 @@ public class Conversation extends CanvasModel<Conversation> {
         dest.writeByte(deleted ? (byte) 1 : (byte) 0);
         dest.writeString(this.deletedString);
         dest.writeString(this.last_authored_message_at);
+        dest.writeString(this.subject);
     }
 
     private Conversation(Parcel in) {
         this.id = in.readLong();
-        this.workflow_state = in.readString();
-        this.last_message = in.readString();
-        this.last_message_at = in.readString();
-        this.message_count = in.readInt();
-        this.subscribed = in.readByte() != 0;
-        this.starred = in.readByte() != 0;
-        in.readList(this.properties, String.class.getClassLoader());
-        this.avatar_url = in.readString();
-        this.visible = in.readByte() != 0;
-        in.readList(this.audience, Long.class.getClassLoader());
-        in.readList(this.participants, BasicUser.class.getClassLoader());
-        in.readList(this.messages, Message.class.getClassLoader());
-        long tmpLastMessageDate = in.readLong();
+        this.workflow_state           = in.readString();
+        this.last_message             = in.readString();
+        this.last_message_at          = in.readString();
+        this.message_count            = in.readInt();
+        this.subscribed               = in.readByte() != 0;
+        this.starred                  = in.readByte() != 0;
+        in.readList(this.properties,    String.class.getClassLoader());
+        this.avatar_url               = in.readString();
+        this.visible                  = in.readByte() != 0;
+        in.readList(this.audience,      Long.class.getClassLoader());
+        in.readList(this.participants,  BasicUser.class.getClassLoader());
+        in.readList(this.messages,      Message.class.getClassLoader());
+        long tmpLastMessageDate       = in.readLong();
         this.lastMessageDate = tmpLastMessageDate == -1 ? null : new Date(tmpLastMessageDate);
-        this.deleted = in.readByte() != 0;
-        this.deletedString = in.readString();
+        this.deleted                  = in.readByte() != 0;
+        this.deletedString            = in.readString();
         this.last_authored_message_at = in.readString();
+        this.subject                  = in.readString();
     }
 
     public static Creator<Conversation> CREATOR = new Creator<Conversation>() {

@@ -6,6 +6,7 @@ import com.instructure.canvasapi.model.QuizQuestion;
 import com.instructure.canvasapi.model.QuizSubmission;
 import com.instructure.canvasapi.model.QuizSubmissionQuestionResponse;
 import com.instructure.canvasapi.model.QuizSubmissionResponse;
+import com.instructure.canvasapi.model.QuizSubmissionTime;
 import com.instructure.canvasapi.utilities.APIHelpers;
 import com.instructure.canvasapi.utilities.CanvasCallback;
 import com.instructure.canvasapi.utilities.CanvasRestAdapter;
@@ -25,6 +26,8 @@ import retrofit.http.Query;
  * Copyright (c) 2014 Instructure. All rights reserved.
  */
 public class QuizAPI {
+
+    private static final String QUIZ_SUBMISSION_SESSION_STARTED = "android_session_started";
 
     public static String getFirstPageQuizzesCacheFilename(CanvasContext canvasContext){
         return canvasContext.toAPIString() + "/quizzes";
@@ -92,8 +95,15 @@ public class QuizAPI {
         @POST("/quiz_submissions/{quiz_submission_id}/questions")
         void postQuizQuestionEssay(@Path("quiz_submission_id") long quizSubmissionId, @Query("attempt") int attempt, @Query("validation_token") String token, @Query("quiz_questions[][id]") long questionId, @Query("quiz_questions[][answer]") String answer, Callback<QuizSubmissionQuestionResponse> callback);
 
-        @POST("/{context_id}/quizzes/{quizid}/submissions/{submission_id}/complete")
-        void postQuizSubmit(@Path("context_id") long context_id, @Path("quizid") long quizId, @Path("submission_id") long submissionId, @Query("attempt") int attempt, @Query("validation_token") String token, Callback<QuizSubmissionResponse> callback);
+        @POST("/{context_id}/quizzes/{quiz_id}/submissions/{submission_id}/complete")
+        void postQuizSubmit(@Path("context_id") long context_id, @Path("quiz_id") long quizId, @Path("submission_id") long submissionId, @Query("attempt") int attempt, @Query("validation_token") String token, Callback<QuizSubmissionResponse> callback);
+
+        @POST("/{context_id}/quizzes/{quiz_id}/submissions/{submission_id}/events")
+        void postQuizStartedEvent(@Path("context_id") long context_id, @Path("quiz_id") long quizId, @Path("submission_id") long submissionId, @Query("quiz_submission_events[][event_type]") String sessionStartedString, @Query("quiz_submission_events[][event_data][user_agent]") String userAgentString, CanvasCallback<Response> callback);
+
+        @GET("/{context_id}/quizzes/{quiz_id}/submissions/{submission_id}/time")
+        void getQuizSubmissionTime(@Path("context_id") long context_id, @Path("quiz_id") long quizId, @Path("submission_id") long submissionId, CanvasCallback<QuizSubmissionTime> callback);
+
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -213,5 +223,18 @@ public class QuizAPI {
 
         buildInterface(callback, canvasContext).postQuizSubmit(canvasContext.getId(), quizSubmission.getQuizId(), quizSubmission.getId(), quizSubmission.getAttempt(), quizSubmission.getValidationToken(), callback);
     }
+
+    public static void postQuizStartedEvent(CanvasContext canvasContext, QuizSubmission quizSubmission, String userAgentString, CanvasCallback<Response> callback) {
+        if (APIHelpers.paramIsNull(canvasContext, callback, quizSubmission, quizSubmission.getSubmissionId())) { return; }
+
+        buildInterface(callback, canvasContext).postQuizStartedEvent(canvasContext.getId(), quizSubmission.getQuizId(), quizSubmission.getId(), QUIZ_SUBMISSION_SESSION_STARTED, userAgentString, callback);
+    }
+
+    public static void getQuizSubmissionTime(CanvasContext canvasContext, QuizSubmission quizSubmission, CanvasCallback<QuizSubmissionTime> callback) {
+        if(APIHelpers.paramIsNull(canvasContext, callback, quizSubmission)) { return; }
+
+        buildInterface(callback, canvasContext).getQuizSubmissionTime(canvasContext.getId(), quizSubmission.getQuizId(), quizSubmission.getId(), callback);
+    }
+
 
 }
